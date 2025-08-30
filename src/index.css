@@ -2,39 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Gaming Discord Bot Design System - All colors MUST be HSL */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark gaming theme */
+    --background: 220 13% 9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card system with glassmorphism */
+    --card: 220 13% 12%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 13% 12%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Discord purple primary */
+    --primary: 235 86% 65%;
     --primary-foreground: 210 40% 98%;
+    --primary-glow: 235 86% 75%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Gaming accents */
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Neon blue accent */
+    --accent: 194 100% 50%;
+    --accent-foreground: 220 13% 9%;
+    --accent-glow: 194 100% 60%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Gaming green for success */
+    --success: 142 100% 50%;
+    --success-foreground: 220 13% 9%;
+
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 18%;
+    --input: 220 13% 15%;
+    --ring: 235 86% 65%;
+
+    /* Gaming gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(235 86% 65%), hsl(194 100% 50%));
+    --gradient-card: linear-gradient(135deg, hsl(220 13% 12% / 0.8), hsl(220 13% 15% / 0.6));
+    --gradient-hero: linear-gradient(135deg, hsl(235 86% 65% / 0.1), hsl(194 100% 50% / 0.1));
+    
+    /* Shadows with glow effects */
+    --shadow-glow: 0 0 20px hsl(235 86% 65% / 0.3);
+    --shadow-accent-glow: 0 0 15px hsl(194 100% 50% / 0.4);
+    --shadow-card: 0 4px 20px hsl(220 13% 5% / 0.5);
+
+    /* Smooth transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
