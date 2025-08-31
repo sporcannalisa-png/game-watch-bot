@@ -2,9 +2,11 @@ import { StatsCard } from "./StatsCard";
 import { PlatformCard } from "./PlatformCard";
 import { BotConfigCard } from "./BotConfigCard";
 import { DiscordEmbedPreview } from "./DiscordEmbedPreview";
+import { DesktopHeader } from "@/components/Desktop/DesktopHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useElectron } from "@/hooks/useElectron";
 import { 
   Bot, 
   GamepadIcon, 
@@ -13,12 +15,18 @@ import {
   Activity,
   Settings,
   RefreshCw,
-  Download
+  Download,
+  Play,
+  Square,
+  Zap
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import heroImage from "@/assets/hero-gaming-bot.jpg";
 
 export const GamesBotDashboard = () => {
+  const [isScrapingActive, setIsScrapingActive] = useState(false);
+  const { isElectron, onScrapingStart, onScrapingStop, showNotification } = useElectron();
+  
   const [platforms, setPlatforms] = useState([
     {
       id: 'steam',
@@ -58,6 +66,24 @@ export const GamesBotDashboard = () => {
     }
   ]);
 
+  // Listen to Electron scraping events
+  useEffect(() => {
+    if (isElectron) {
+      const unsubscribeStart = onScrapingStart(() => {
+        setIsScrapingActive(true);
+      });
+      
+      const unsubscribeStop = onScrapingStop(() => {
+        setIsScrapingActive(false);
+      });
+
+      return () => {
+        unsubscribeStart();
+        unsubscribeStop();
+      };
+    }
+  }, [isElectron]);
+
   const togglePlatform = (id: string, enabled: boolean) => {
     setPlatforms(prev => 
       prev.map(p => p.id === id ? { ...p, enabled } : p)
@@ -68,8 +94,35 @@ export const GamesBotDashboard = () => {
     console.log(`Configuring platform: ${id}`);
   };
 
+  const toggleScraping = async () => {
+    const newState = !isScrapingActive;
+    setIsScrapingActive(newState);
+    
+    if (isElectron) {
+      await showNotification(
+        'Gaming Bot',
+        newState ? 'Scraping avviato per tutte le piattaforme' : 'Scraping interrotto'
+      );
+    }
+  };
+
+  const startScraping = () => {
+    setIsScrapingActive(true);
+  };
+
+  const stopScraping = () => {
+    setIsScrapingActive(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Desktop Header (Electron only) */}
+      <DesktopHeader 
+        onStartScraping={startScraping}
+        onStopScraping={stopScraping}
+        isScrapingActive={isScrapingActive}
+      />
+      
       {/* Hero Section */}
       <div 
         className="relative h-64 bg-cover bg-center bg-no-repeat"
@@ -84,18 +137,44 @@ export const GamesBotDashboard = () => {
                 <Bot className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-foreground">Gaming Bot Dashboard</h1>
+                <h1 className="text-4xl font-bold text-foreground">
+                  Gaming Bot Dashboard {isElectron && '(Desktop)'}
+                </h1>
                 <p className="text-lg text-muted-foreground">Monitora i nuovi giochi su tutte le piattaforme</p>
               </div>
             </div>
             <div className="flex items-center justify-center space-x-4">
-              <Badge className="bg-success/20 text-success border-success/30">
+              <Badge className={`${isScrapingActive ? 'bg-success/20 text-success border-success/30' : 'bg-muted/50 text-muted-foreground border-muted/30'}`}>
                 <Activity className="w-3 h-3 mr-1" />
-                Sistema Attivo
+                {isScrapingActive ? 'Scraping Attivo' : 'Sistema Pronto'}
               </Badge>
               <Badge className="bg-primary/20 text-primary border-primary/30">
                 4 Piattaforme Monitorate
               </Badge>
+              {/* Quick Controls for non-Electron */}
+              {!isElectron && (
+                <Button
+                  onClick={toggleScraping}
+                  size="sm"
+                  className={`${
+                    isScrapingActive 
+                      ? "bg-destructive hover:bg-destructive/90" 
+                      : "bg-primary hover:bg-primary/90"
+                  }`}
+                >
+                  {isScrapingActive ? (
+                    <>
+                      <Square className="w-4 h-4 mr-1" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-1" />
+                      Start
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>

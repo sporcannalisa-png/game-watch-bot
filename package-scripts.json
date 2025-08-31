@@ -1,0 +1,23 @@
+{
+  "electron-scripts": {
+    "electron:dev": "node scripts/electron-dev.js",
+    "electron:build": "node scripts/electron-build.js",
+    "electron:pack": "npm run build && npx electron-builder --config electron-builder.json",
+    "electron:pack:all": "npm run build && npx electron-builder --config electron-builder.json --win --mac --linux",
+    "electron:rebuild": "npx electron-rebuild"
+  },
+  "instructions": {
+    "note": "Aggiungi questi script al tuo package.json nella sezione 'scripts':",
+    "example": {
+      "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+        "preview": "vite preview",
+        "electron:dev": "node scripts/electron-dev.js",
+        "electron:build": "node scripts/electron-build.js",
+        "electron:pack": "npm run build && npx electron-builder --config electron-builder.json"
+      }
+    }
+  }
+}
