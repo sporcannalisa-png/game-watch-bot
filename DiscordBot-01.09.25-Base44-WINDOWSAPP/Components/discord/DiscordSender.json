@@ -1,0 +1,54 @@
+const platformColors = {
+  "PS Plus": 28141, // Blue
+  "Xbox Game Pass": 1079952, // Green
+  "Prime Gaming": 9520927, // Purple
+  "Multiple": 16096779, // Yellow/Orange
+};
+
+export async function sendDiscordEmbed(webhookUrl, game) {
+  if (!webhookUrl) {
+    console.warn("Nessun URL webhook Discord configurato.");
+    return { success: false, message: "URL Webhook non configurato." };
+  }
+
+  const fields = [];
+  if (game.genere) fields.push({ name: "Genere", value: game.genere, inline: true });
+  if (game.piattaforma) fields.push({ name: "Piattaforma", value: game.piattaforma, inline: true });
+  if (game.prezzo) fields.push({ name: "Prezzo", value: game.prezzo, inline: true });
+  if (game.data_rilascio) fields.push({ name: "Data di Rilascio", value: new Date(game.data_rilascio).toLocaleDateString('it-IT'), inline: true });
+  if (game.rating) fields.push({ name: "Rating", value: `${game.rating} ⭐`, inline: true });
+
+  const embed = {
+    title: game.titolo,
+    description: game.descrizione || "Nessuna descrizione disponibile.",
+    url: game.link,
+    color: platformColors[game.piattaforma] || platformColors["Multiple"],
+    thumbnail: {
+      url: game.immagine,
+    },
+    fields: fields,
+    footer: {
+      text: `Nuovo gioco aggiunto su GameHub!`,
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Errore dal server Discord: ${response.status}`);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Errore durante l'invio dell'embed a Discord:", error);
+    return { success: false, message: "Impossibile inviare a Discord. Controlla l'URL del webhook nelle impostazioni." };
+  }
+}

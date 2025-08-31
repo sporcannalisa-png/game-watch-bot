@@ -1,0 +1,75 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save, Loader2 } from "lucide-react";
+
+export default function ManualGameForm({ onSubmit, isProcessing }) {
+  const [gameData, setGameData] = useState({
+    titolo: "",
+    descrizione: "",
+    genere: "",
+    piattaforma: "",
+    link: "",
+    immagine: "",
+    data_rilascio: "",
+    prezzo: "Gratuito",
+    rating: ""
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({
+      ...gameData,
+      rating: gameData.rating ? parseFloat(gameData.rating) : null
+    });
+  };
+
+  const handleChange = (field, value) => {
+    setGameData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="titolo">Titolo *</Label>
+          <Input id="titolo" value={gameData.titolo} onChange={(e) => handleChange("titolo", e.target.value)} className="bg-background" placeholder="Nome del gioco" required />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="piattaforma">Piattaforma *</Label>
+          <Select value={gameData.piattaforma} onValueChange={(value) => handleChange("piattaforma", value)} required>
+            <SelectTrigger className="bg-background"><SelectValue placeholder="Seleziona" /></SelectTrigger>
+            <SelectContent><SelectItem value="PS Plus">PS Plus</SelectItem><SelectItem value="Xbox Game Pass">Xbox Game Pass</SelectItem><SelectItem value="Prime Gaming">Prime Gaming</SelectItem><SelectItem value="Multiple">Multiple</SelectItem></SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="immagine">URL Immagine</Label>
+        <Input id="immagine" type="url" value={gameData.immagine} onChange={(e) => handleChange("immagine", e.target.value)} className="bg-background" placeholder="https://..." />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="descrizione">Descrizione</Label>
+        <Textarea id="descrizione" value={gameData.descrizione} onChange={(e) => handleChange("descrizione", e.target.value)} className="bg-background" placeholder="Descrizione del gioco..." />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="genere">Genere</Label>
+          <Input id="genere" value={gameData.genere} onChange={(e) => handleChange("genere", e.target.value)} className="bg-background" placeholder="es. Azione, RPG" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="rating">Rating (0-5)</Label>
+          <Input id="rating" type="number" min="0" max="5" step="0.1" value={gameData.rating} onChange={(e) => handleChange("rating", e.target.value)} className="bg-background" placeholder="4.5" />
+        </div>
+      </div>
+      <Button type="submit" disabled={isProcessing} className="w-full">
+        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aggiungi Gioco"}
+      </Button>
+    </form>
+  );
+}

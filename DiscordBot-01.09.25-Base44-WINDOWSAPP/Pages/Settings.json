@@ -1,0 +1,107 @@
+import React, { useState, useEffect } from "react";
+import { User } from "@/entities/User";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Save, Loader2, AlertTriangle, ExternalLink } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+export default function Settings() {
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [initialUrl, setInitialUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoading(true);
+      try {
+        const currentUser = await User.me();
+        if (currentUser?.discord_webhook_url) {
+          setWebhookUrl(currentUser.discord_webhook_url);
+          setInitialUrl(currentUser.discord_webhook_url);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+      setIsLoading(false);
+    };
+    fetchUserData();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      if (webhookUrl && !webhookUrl.startsWith("https://discord.com/api/webhooks/")) {
+        setFeedback({ type: "error", message: "L'URL del Webhook non sembra valido." });
+        setIsSaving(false);
+        return;
+      }
+      await User.updateMyUserData({ discord_webhook_url: webhookUrl });
+      setInitialUrl(webhookUrl);
+      setFeedback({ type: "success", message: "Impostazioni salvate!" });
+    } catch (error) {
+      setFeedback({ type: "error", message: "Errore durante il salvataggio." });
+    }
+    setIsSaving(false);
+    setTimeout(() => setFeedback(null), 3000);
+  };
+  
+  return (
+    <div className="space-y-6">
+       <h1 className="text-3xl font-bold text-foreground">Impostazioni</h1>
+
+        {feedback && (
+          <Alert variant={feedback.type === 'error' ? 'destructive' : 'default'} className={feedback.type === 'success' ? 'bg-green-500/10 border-green-500/20' : ''}>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{feedback.message}</AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="bg-card">
+          <CardHeader>
+            <CardTitle>Integrazione Discord</CardTitle>
+            <CardDescription>
+              Inserisci l'URL del Webhook del tuo canale Discord per ricevere notifiche sui nuovi giochi.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="space-y-2">
+                <div className="h-4 bg-secondary rounded w-1/4"></div>
+                <div className="h-10 bg-secondary rounded"></div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="webhook-url">URL Webhook Discord</Label>
+                <Input
+                  id="webhook-url"
+                  type="url"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://discord.com/api/webhooks/..."
+                  className="bg-secondary"
+                />
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center">
+                 <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary inline-flex items-center gap-1">
+                    Guida ai Webhook <ExternalLink className="w-3 h-3"/>
+                </a>
+                <Button onClick={handleSave} disabled={isSaving || isLoading || webhookUrl === initialUrl}>
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Salva"
+                  )}
+                </Button>
+            </div>
+          </CardContent>
+        </Card>
+    </div>
+  );
+}

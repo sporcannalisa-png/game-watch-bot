@@ -1,0 +1,42 @@
+import React from "react";
+import { Button } from "@/components/ui/button";
+
+const platformFilters = ["all", "PS Plus", "Xbox Game Pass", "Prime Gaming"];
+
+export default function GameFilters({ filters, setFilters, games }) {
+  const getUniqueGenres = () => ["all", ...new Set(games.map(g => g.genere).filter(Boolean))];
+  const genreFilters = getUniqueGenres();
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <span className="text-sm text-muted-foreground mr-2">Piattaforma:</span>
+        {platformFilters.map(p => (
+          <Button
+            key={p}
+            variant={filters.piattaforma === p ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setFilters(prev => ({...prev, piattaforma: p}))}
+            className="flex-shrink-0"
+          >
+            {p === 'all' ? 'Tutte' : p}
+          </Button>
+        ))}
+      </div>
+       <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <span className="text-sm text-muted-foreground mr-2">Genere:</span>
+        {genreFilters.map(g => (
+          <Button
+            key={g}
+            variant={filters.genere === g ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setFilters(prev => ({...prev, genere: g}))}
+            className="flex-shrink-0"
+          >
+            {g === 'all' ? 'Tutti' : g}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}

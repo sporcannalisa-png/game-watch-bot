@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { Game } from "@/entities/Game";
+import { User } from "@/entities/User";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Upload, Plus, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ManualGameForm from "../components/import/ManualGameForm";
+import CSVImporter from "../components/import/CSVImporter";
+import { sendDiscordEmbed } from "../components/discord/DiscordSender";
+
+async function sendNewGamesToDiscord(games) {
+    try {
+        const currentUser = await User.me();
+        if (!currentUser?.discord_webhook_url) return;
+        
+        for (const game of games) {
+            await sendDiscordEmbed(currentUser.discord_webhook_url, game);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    } catch (error) {
+        console.error("Failed to send automatic Discord notifications:", error);
+    }
+}
+
+export default function ImportGames() {
+    const [activeTab, setActiveTab] = useState("manual");
+    const [importResults, setImportResults] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleManualImport = async (gameData) => {
+        setIsProcessing(true);
+        try {
+            const existingGames = await Game.list({ filter: { titolo: gameData.titolo }});
+            if (existingGames.length > 0) {
+                setImportResults({ type: "warning", message: `Il gioco "${gameData.titolo}" esiste già.` });
+                setIsProcessing(false);
+                return;
+            }
+
+            const newGame = await Game.create({ ...gameData, is_processed: true });
+            setImportResults({ type: "success", message: `Gioco "${gameData.titolo}" importato!` });
+            await sendNewGamesToDiscord([newGame]);
+        } catch (error) {
+            setImportResults({ type: "error", message: `Errore: ${error.message}` });
+        }
+        setIsProcessing(false);
+    };
+
+    const handleCSVImport = async (games) => {
+        setIsProcessing(true);
+        try {
+            const existingGames = await Game.list();
+            const newGamesData = [];
+            const duplicates = [];
+
+            games.forEach(game => {
+                const exists = existingGames.find(g => g.titolo.toLowerCase() === game.titolo.toLowerCase());
+                if (exists) {
+                    duplicates.push(game.titolo);
+                } else {
+                    newGamesData.push({ ...game, is_processed: true });
+                }
+            });
+
+            let createdGames = [];
+            if (newGamesData.length > 0) {
+               createdGames = await Game.bulkCreate(newGamesData);
+            }
+
+            let message = `${newGamesData.length} giochi importati.`;
+            if (duplicates.length > 0) message += ` ${duplicates.length} duplicati ignorati.`;
+            setImportResults({ type: "success", message });
+            
+            if (createdGames.length > 0) await sendNewGamesToDiscord(createdGames);
+
+        } catch (error) {
+            setImportResults({ type: "error", message: `Errore CSV: ${error.message}` });
+        }
+        setIsProcessing(false);
+    };
+    
+    return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-foreground">Aggiungi Giochi</h1>
+        
+        {importResults && (
+          <Alert variant={importResults.type === 'error' ? 'destructive' : 'default'} className={importResults.type === 'success' ? 'bg-green-500/10 border-green-500/20' : ''}>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{importResults.message}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="bg-card">
+               <CardHeader>
+                <div className="flex p-1 bg-secondary rounded-lg w-min">
+                  <Button variant={activeTab === 'manual' ? 'default' : 'ghost'} onClick={() => setActiveTab('manual')} className="gap-2"><Plus className="w-4 h-4"/> Manuale</Button>
+                  <Button variant={activeTab === 'csv' ? 'default' : 'ghost'} onClick={() => setActiveTab('csv')} className="gap-2"><Upload className="w-4 h-4"/> CSV</Button>
+                </div>
+               </CardHeader>
+              <CardContent>
+                {activeTab === "manual" && <ManualGameForm onSubmit={handleManualImport} isProcessing={isProcessing} />}
+                {activeTab === "csv" && <CSVImporter onImport={handleCSVImport} isProcessing={isProcessing} />}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="hidden lg:block">
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>Importazione</CardTitle>
+                <CardDescription>Aggiungi giochi manualmente o in blocco tramite un file CSV.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">L'invio a Discord è automatico per i nuovi giochi se hai configurato un webhook nelle impostazioni.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+    </div>
+  );
+}
